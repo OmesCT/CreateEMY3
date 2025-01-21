@@ -21,10 +21,10 @@ class EmployeeController extends Controller
         //
         $query = $request->input('search', '');  //หาข้อตวามได้ทั้งชื่อและนามสกุล
 
-        $employees = DB::table('employees')
-        ->where('first_name', 'like', '%'.$query.'%')
+        $employees = DB::table('employees') //อ้างอิงจากตาราง employees
+        ->where('first_name', 'like', '%'.$query.'%') 
         ->orWhere('last_name', 'like', '%'.$query.'%')
-        ->orderBy('emp_no', 'desc')
+        //->orderBy('emp_no', 'desc')
         ->paginate(20);
 
         //Log::info($employees);

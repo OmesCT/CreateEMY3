@@ -24,13 +24,14 @@ export default function Index({ employees, query }) {
     // ฟังก์ชันสำหรับการจัดเรียงข้อมูล
     const sortedEmployees = [...employees.data].sort((a, b) => {
         if (a[sortConfig.key] > b[sortConfig.key]) {
-            return sortConfig.direction === 'ascending' ? -1 : 1; //ให้ b อยู่ก่อน a
+            return sortConfig.direction === 'ascending' ? 1 : -1; // ให้ a อยู่หลัง b
         }
         if (a[sortConfig.key] < b[sortConfig.key]) {
-            return sortConfig.direction === 'ascending' ? 1 : -1; //b อยู่หลัง a
+            return sortConfig.direction === 'ascending' ? -1 : 1; // ให้ a อยู่ก่อน b
         }
         return 0;
     });
+    
 
     // ฟังก์ชันสำหรับการขอจัดเรียงข้อมูล
     const requestSort = (key) => {
