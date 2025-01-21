@@ -29,8 +29,7 @@ const CreateEmployee = ({ departments }) => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            const path = URL.createObjectURL(file);
-            data.img = path; // กำหนด path ไปยัง data.img
+            setData('img', file); // ใช้ setData เพื่อบันทึกไฟล์ลงในฟอร์ม
         }
     };
 

@@ -9,6 +9,7 @@ use Illuminate\Pagination\Paginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 
 class EmployeeController extends Controller
@@ -18,21 +19,20 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        //
-        $query = $request->input('search', '');  //หาข้อตวามได้ทั้งชื่อและนามสกุล
-
-        $employees = DB::table('employees') //อ้างอิงจากตาราง employees
-        ->where('first_name', 'like', '%'.$query.'%') 
-        ->orWhere('last_name', 'like', '%'.$query.'%')
-        //->orderBy('emp_no', 'desc')
-        ->paginate(20);
-
-        //Log::info($employees);
-
-        return Inertia::render('Employee/Index',[
+        // รับค่า search query
+        $query = $request->input('search', '');
+    
+        // ถ้าช่องค้นหาว่าง ให้แสดงพนักงานทั้งหมด
+        $employees = DB::table('employees')
+            ->when($query, function ($queryBuilder, $query) {
+                return $queryBuilder->where('first_name', 'like', '%' . $query . '%')
+                                    ->orWhere('last_name', 'like', '%' . $query . '%');
+            })
+            ->paginate(20);
+    
+        return Inertia::render('Employee/Index', [
             'employees' => $employees,
             'query' => $query,
-
         ]);
     }
 
@@ -59,7 +59,7 @@ class EmployeeController extends Controller
         // show all input data
         Log::info($request->all());
 
-        try{
+        
         //ตรวจสอบข้อมูลที่รับมาจากฟอร์ม
         $validated = $request->validate([
             'birth_date' => 'required|date',
@@ -68,15 +68,24 @@ class EmployeeController extends Controller
             'gender' => 'required|in:M,F', // เพิ่มการตรวจสอบ gender
             'hire_date' => 'nullable|date', // เพิ่มการตรวจสอบ hire_date
             'dept_no' => 'required', // เพิ่มการตรวจสอบ dept_no
-            'img' => 'required',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', // ตรวจสอบรูปภาพ
         ]);
 
+        try{
         DB::transaction(function() use ($validated){
             //หาค่า emp_no ล่าสุด
             $latestEmpNo = DB::table('employees')->max('emp_no')?? 0;//ถ้าไม่มีข้อมูลให้เป็น 0
             $newEmpNo = $latestEmpNo + 1; //ค่าล่าสุด + 1
 
             Log::info($newEmpNo);
+            
+            if (request()->hasFile('img')) {
+                $file = request()->file('img');
+                $filePath = $file->store('images/employees', 'public');
+            } else {
+                $filePath = null; // หากไม่มีรูปภาพ ให้ตั้งค่าเป็น null
+            }
+    
 
             //บันทึกข้อมูลลงในตาราง employees
             DB::table('employees')->insert([
@@ -86,7 +95,7 @@ class EmployeeController extends Controller
                 'last_name' => $validated['last_name'],
                 'gender' => $validated['gender'],
                 'hire_date' => $validated['hire_date'] ?? now(),
-                'img' => $validated['img'],
+                'img' => $filePath,
             ]);
 
             //บันทึกข้อมูลลงในตาราง dept_emp
