@@ -79,11 +79,15 @@ class EmployeeController extends Controller
 
             Log::info($newEmpNo);
             
-            if (request()->hasFile('img')) {
-                $file = request()->file('img');
-                $filePath = $file->store('images/employees', 'public');
-            } else {
-                $filePath = null; // หากไม่มีรูปภาพ ให้ตั้งค่าเป็น null
+            $img = null;
+
+            if(request()->hasFile('img')){
+                $file = request()->file('img'); //รับไฟล์ที่ส่งมาและตรวจสอบ img
+                $extention = $file->getClientOriginalExtension(); //นามสกุลไฟล์
+                $filename = $newEmpNo . '.' . $extention; //ชื่อไฟล์ใหม่
+                $path = 'img/employee/'; //กำหนด path ที่จะบันทึกไฟล์
+                $file->move(public_path($path), $filename); //ย้ายไฟล์ไปยัง path ที่กำหนด
+                $img = $path . $filename; // set ค่า img ใหม่
             }
     
 
@@ -95,7 +99,7 @@ class EmployeeController extends Controller
                 'last_name' => $validated['last_name'],
                 'gender' => $validated['gender'],
                 'hire_date' => $validated['hire_date'] ?? now(),
-                'img' => $filePath,
+                'img' => $img, //เพิ่มข้อมูลรูปภาพ
             ]);
 
             //บันทึกข้อมูลลงในตาราง dept_emp
